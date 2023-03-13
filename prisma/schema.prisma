@@ -1,0 +1,241 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator nestjs_dto_generator {
+  provider      = "prisma-nestjs-dto-generator"
+  output        = "../src/shared/generates/prisma"
+  enableSwagger = true
+  toLowerCase   = true
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// save user information and relationships to the tables included in the requirements
+model User {
+  id        String    @id @default(uuid())
+  email     String?   @unique
+  username  String    @unique
+  password  String
+  birthday  DateTime?
+  address   String?
+  gender    Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  isAdmin   Boolean   @default(false) // authorization for user
+  isDelete  Boolean?  @default(false)
+
+  goal            UserGoal?
+  posts           Post[]
+  comments        Comment[]
+  weights         Weight[]
+  calories        Calorie[]
+  bodyFats        BodyFat[]
+  progressDailies GoalProgressDaily[]
+  tags            Tag[]
+  diaries         Diary[]
+  dailyTasks      DailyTask[]
+
+  @@map("user")
+}
+
+// Here's the Columns table, it' s master data
+model Category {
+  id        String    @id @default(uuid())
+  title     String // recommneded, diet, beauty, health
+  subTitle  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  posts Post[]
+
+  @@map("category")
+}
+
+// posts in columns
+model Post {
+  id        String    @id @default(uuid())
+  title     String
+  content   String
+  likes     Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  isDelete  Boolean?  @default(false)
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  categories Category[]
+  tags       Tag[]
+  comments   Comment[]
+
+  @@map("post")
+}
+
+// tags of post
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  isDelete  Boolean?  @default(false)
+
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+  posts       Post[]
+
+  @@map("tag")
+}
+
+// commnents of post
+model Comment {
+  id        String    @id @default(uuid())
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  isDelete  Boolean?  @default(false)
+
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+  post        Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
+
+  @@map("comment")
+}
+
+// weight of user, Each record will store weight values at different times
+model Weight {
+  id         Int       @id @default(autoincrement())
+  value      Float
+  recordedAt DateTime  @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  isDelete   Boolean?  @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@map("weight")
+}
+
+// calorie of user, Each record will store calorie values at different times
+model Calorie {
+  id         Int       @id @default(autoincrement())
+  value      Float
+  recordedAt DateTime  @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  isDelete   Boolean?  @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@map("calorie")
+}
+
+// body fat of user, Each record will store body fat values at different times
+model BodyFat {
+  id         Int       @id @default(autoincrement())
+  value      Float
+  recordedAt DateTime  @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  isDelete   Boolean?  @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@map("body_fat")
+}
+
+// goals set by the user, establishing weight, fat, calories during use
+model UserGoal {
+  id        String    @id @default(uuid())
+  calorie   Float
+  weight    Float
+  bodyFat   Float
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  isDelete  Boolean?  @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  @@map("user_goal")
+}
+
+// The user's daily process and summary table based on recordedAt,calorie, weight, bodyFat, progress properties 
+// with user's diets to export Date/Achievement Rate and weight graphs, Body Fat.
+model GoalProgressDaily {
+  id         String    @id @default(uuid())
+  calorie    Float?
+  weight     Float?
+  bodyFat    Float?
+  progress   Int?
+  recordedAt DateTime  @unique @db.Date
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  isDelete   Boolean?  @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  dailyDiets DailyDiet[]
+
+  @@map("goal_progress_daily")
+}
+
+// Save the diet along with the calorie content
+model DailyDiet {
+  id         Int       @id @default(autoincrement())
+  mealType   Int // 0: morning, 1: lunch, 2: dinner, 3: snack
+  calorie    Float
+  recordedAt DateTime  @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  isDelete   Boolean?  @default(false)
+
+  progressDaily   GoalProgressDaily @relation(fields: [progressDailyId], references: [id], onDelete: Cascade)
+  progressDailyId String
+
+  @@map("daily_diet")
+}
+
+// user's diaries daily
+model Diary {
+  id        String    @id @default(uuid())
+  title     String
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  isDelete  Boolean?  @default(false)
+
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+
+  @@map("diary")
+}
+
+// user's exercise daily
+model DailyTask {
+  id            String    @id @default(uuid())
+  taskName      String
+  description   String
+  taskType      Int // 0:STAND, 1:SIT, 2:REST
+  taskStatus    Boolean   @default(false)
+  completedDate DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
+  isDelete      Boolean?  @default(false)
+
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+
+  @@map("daily_task")
+}
