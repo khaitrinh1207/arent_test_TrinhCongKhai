@@ -10,13 +10,13 @@ import { ERROR_MESSAGE } from './shared/constants';
 import { PrismaInterceptor } from './interceptors/prisma.interceptor';
 import { UserRegisterDto, TokenResponseDto } from './auth/dtos';
 import { ResponseDto, ResponsePaginationDto } from './shared/base';
-import { UserByIdResponseDto, UsersResponseDto } from './user/dtos';
-import { ProgressDailyResponseDto } from './goal/dtos';
-import { GraphResponseDto, GraphTypeDto } from './graph/dtos/graph.dto';
-import { ExercisesResponseDto } from './exercise/dtos';
-import { DiariesResponseDto } from './diary/dtos';
 import helmet from 'helmet';
 import * as compression from 'compression';
+import { ProgressDailyResponseDto } from './modules/goal/dtos';
+import { UserByIdResponseDto, UsersResponseDto } from './modules/user/dtos';
+import { GraphResponseDto, GraphTypeDto } from './modules/graph/dtos';
+import { ExercisesResponseDto } from './modules/exercise/dtos';
+import { DiariesResponseDto } from './modules/diary/dtos';
 
 dotenv.config();
 

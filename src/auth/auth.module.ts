@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { LoggerModule } from '../logger/logger.module';
-import { PrismaService } from '../shared/base/service/prisma.service';
-import { UserModule } from '../user/user.module';
+import { PrismaService } from '../shared/base';
 import { AuthJwtStrategy } from './strategies/auth-jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { JWT_EXPIRED_TIME } from '../shared/constants';
+import { UserModule } from '../modules/user/user.module';
 
 @Module({
   imports: [
